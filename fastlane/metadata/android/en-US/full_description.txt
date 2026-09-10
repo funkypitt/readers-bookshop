@@ -1,0 +1,11 @@
+A black-and-white app that searches free ebook catalogues and brings the file to the phone, made for e-ink phones and for anyone who wants a list and nothing else. No icons, no colours, no wallpaper: white on black or black on white, serif, sans or mono, three sizes. Part of the Reader's family of apps (Reader's Launcher, Books, Notes, Tasks, Calendar…). It does not read: the file is handed to Reader's Books or to any reader.
+
+Pick a language, type a title or an author, tick the box that says you will only take what you may, and every source for that language is asked at once. The sources that answer are listed with their results. Tap a result to see the formats offered and, when the source tells the author's dates, whether the seventy years of Swiss and European copyright have passed.
+
+Sources: Project Gutenberg, Standard Ebooks, Wikisource in six languages (the EPUB is assembled by the app), Bibliothèque numérique romande, Ebooks libres et gratuits, textos.info, the Internet Archive, and Anna's Archive, off until turned on knowingly. A further list of sites is left to the browser.
+
+The file goes to Download/Reader's Bookshop. Every line has a share arrow and a cross; the menu opens the folder and deletes everything after a confirmation.
+
+The app hosts nothing and keeps no account: a search goes from the phone to the site, the file from the site to the phone. No statistics, no tracking, no logs. English, French, German, Spanish, Portuguese, Russian. Free software, MIT licence.
+
+Pierre Gallaz · developed with Claude Code

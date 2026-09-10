@@ -1,0 +1,11 @@
+Une application en noir et blanc qui cherche dans les catalogues d'ebooks gratuits et amène le fichier sur le téléphone, faite pour les téléphones e-ink et pour qui veut une liste et rien d'autre. Pas d'icônes, pas de couleurs, pas de fond d'écran : blanc sur noir ou noir sur blanc, serif, sans ou mono, trois tailles. De la famille des applications Reader's (Reader's Launcher, Books, Notes, Tasks, Calendar…). Elle ne lit pas : le fichier est remis à Reader's Books ou à n'importe quel lecteur.
+
+Choisissez une langue, tapez un titre ou un auteur, cochez la case qui dit que vous ne prendrez que ce que vous avez le droit de prendre, et toutes les sources de cette langue sont interrogées d'un coup. Celles qui répondent sont listées avec leurs résultats. Touchez un résultat pour voir les formats offerts et, quand la source donne les dates de l'auteur, si les septante ans du droit d'auteur suisse et européen sont passés.
+
+Sources : Project Gutenberg, Standard Ebooks, Wikisource en six langues (l'EPUB est assemblé par l'application), Bibliothèque numérique romande, Ebooks libres et gratuits, textos.info, Internet Archive, et Anna's Archive, désactivée tant qu'on ne l'active pas en connaissance de cause. D'autres sites sont laissés au navigateur.
+
+Le fichier va dans Download/Reader's Bookshop. Chaque ligne a une flèche de partage et une croix ; le menu ouvre le dossier et efface tout après confirmation.
+
+L'application n'héberge rien et ne tient aucun compte : une recherche va du téléphone au site, le fichier du site au téléphone. Pas de statistiques, pas de pistage, pas de journal. Anglais, français, allemand, espagnol, portugais, russe. Logiciel libre, licence MIT.
+
+Pierre Gallaz · développé avec Claude Code

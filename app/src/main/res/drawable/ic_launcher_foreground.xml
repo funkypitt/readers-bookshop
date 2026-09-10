@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- A shop awning over a book: the bookshop. Same stroke and weight as the other Reader's icons. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android" android:width="108dp" android:height="108dp" android:viewportWidth="108" android:viewportHeight="108">
+    <path android:strokeColor="#FFFFFF" android:strokeWidth="4" android:fillColor="#00000000" android:pathData="M28,40 L28,30 L80,30 L80,40 M28,40 Q35,48 41,40 Q48,48 54,40 Q60,48 67,40 Q74,48 80,40" />
+    <path android:strokeColor="#FFFFFF" android:strokeWidth="4" android:fillColor="#00000000" android:pathData="M36,52h36v28H36z" />
+    <path android:fillColor="#FFFFFF" android:pathData="M42,60h24v3H42z M42,67h24v3H42z M42,74h14v3H42z" />
+</vector>
