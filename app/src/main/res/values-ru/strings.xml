@@ -72,4 +72,6 @@
     <string name="none">нет</string>
     <string name="annas_key">ключ участника (быстрые загрузки, необязательно)</string>
     <string name="annas_key_hint">ключ вашей учётной записи Anna\'s Archive; отмена удаляет его</string>
+    <string name="log">журнал</string>
+    <string name="log_share">нажмите, чтобы поделиться последними строками</string>
 </resources>

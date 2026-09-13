@@ -72,4 +72,6 @@
     <string name="none">ninguna</string>
     <string name="annas_key">clave de miembro (descargas rápidas, opcional)</string>
     <string name="annas_key_hint">la clave de tu cuenta de Anna\'s Archive; cancelar la quita</string>
+    <string name="log">registro</string>
+    <string name="log_share">toca para compartir las últimas líneas</string>
 </resources>

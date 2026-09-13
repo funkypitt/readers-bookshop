@@ -85,6 +85,12 @@ fun SourcesScreen(nav: Nav, app: App) {
                     }
                     TextRow(stringResource(R.string.add_mirror), size = typo.title) { addMirror = true }
                     TextRow(if (settings.annasKey.isBlank()) stringResource(R.string.none) else "••••" + settings.annasKey.takeLast(4), secondary = stringResource(R.string.annas_key), size = typo.title) { editKey = true }
+                    // what the last searches did, to understand a silent failure; shared as text
+                    val diag = com.freedomfighter.readersbookshop.net.Diag.lines
+                    TextRow(stringResource(R.string.log), secondary = if (diag.isEmpty()) stringResource(R.string.none) else stringResource(R.string.log_share), size = typo.title) {
+                        if (diag.isNotEmpty()) runCatching { context.startActivity(Intent.createChooser(Intent(Intent.ACTION_SEND).setType("text/plain").putExtra(Intent.EXTRA_TEXT, com.freedomfighter.readersbookshop.net.Diag.text()), "log")) }
+                    }
+                    diag.takeLast(12).forEach { l -> Small(l, Modifier.padding(horizontal = rowPadH, vertical = 2.dp), maxLines = 2) }
                 }
                 Rule(Modifier.padding(vertical = 6.dp))
                 Small(stringResource(R.string.other_sources) + " · " + (LANG_NAMES[lang] ?: lang.code), Modifier.padding(horizontal = rowPadH, vertical = 8.dp))

@@ -37,7 +37,7 @@ class Registry(context: Context, private val prefs: Prefs) {
             async {
                 val t0 = System.currentTimeMillis()
                 val r = runCatching { withTimeoutOrNull(if (s === annas) 120_000L else 25_000L) { s.search(query, lang) } ?: throw java.util.concurrent.TimeoutException(s.name) }
-                android.util.Log.d("Bookshop", "${s.name}: " + (r.getOrNull()?.size?.let { "$it hits" } ?: "failed: ${r.exceptionOrNull()}") + " in ${System.currentTimeMillis() - t0} ms")
+                com.freedomfighter.readersbookshop.net.Diag.log("${s.name}: " + (r.getOrNull()?.size?.let { "$it hits" } ?: "failed: ${r.exceptionOrNull()?.let { it.javaClass.simpleName + " " + (it.message ?: "") }}") + " in ${System.currentTimeMillis() - t0} ms")
                 onSource(s, r)
             }
         }.forEach { it.await() }

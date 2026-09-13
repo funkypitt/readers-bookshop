@@ -72,4 +72,6 @@
     <string name="none">aucune</string>
     <string name="annas_key">clé d\'adhérent (téléchargements rapides, facultatif)</string>
     <string name="annas_key_hint">la clé de votre compte Anna\'s Archive ; annuler la retire</string>
+    <string name="log">journal</string>
+    <string name="log_share">toucher pour partager les dernières lignes</string>
 </resources>

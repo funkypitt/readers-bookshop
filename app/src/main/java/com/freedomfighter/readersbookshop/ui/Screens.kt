@@ -70,6 +70,8 @@ class SearchState {
     var asked by mutableIntStateOf(0)
     var offline by mutableStateOf(false)
     val added = mutableStateMapOf<String, Boolean>()
+    /** Source name to a short reason, for the sources that did not answer. */
+    val failures = mutableStateMapOf<String, String>()
     var job: Job? = null
     var chosen by mutableStateOf<Hit?>(null)
     var options by mutableStateOf<Pair<List<Download>, Rights>?>(null)
@@ -214,14 +216,14 @@ fun SearchScreen(nav: Nav, app: App) {
 
     fun run() {
         st.job?.cancel()
-        st.hits.clear(); st.answered = 0; st.offline = false
+        st.hits.clear(); st.answered = 0; st.offline = false; st.failures.clear()
         val sources = app.registry.forLanguage(lang)
         st.asked = sources.size
         if (sources.isEmpty() || st.query.isBlank()) return
         st.running = true
         st.job = st.scope.launch {
             try { withContext(Dispatchers.IO) {
-                app.registry.search(st.query.trim(), lang) { _, r ->
+                app.registry.search(st.query.trim(), lang) { src, r ->
                     st.scope.launch {
                         // ten per source, and the sources in their fixed order rather than by who answered first
                         r.onSuccess { hits ->
@@ -231,7 +233,7 @@ fun SearchScreen(nav: Nav, app: App) {
                             val sorted = st.hits.sortedBy { order.indexOf(it.source.id) }
                             st.hits.clear(); st.hits.addAll(sorted)
                         }
-                        r.onFailure { if (it is java.net.UnknownHostException) st.offline = true }
+                        r.onFailure { st.failures[src.name] = com.freedomfighter.readersbookshop.data.Downloads.describe(it); if (it is java.net.UnknownHostException) st.offline = true }
                     }
                 }
             } } finally { st.running = false }
@@ -269,6 +271,7 @@ fun SearchScreen(nav: Nav, app: App) {
             }
             LazyColumn(Modifier.weight(1f), contentPadding = PaddingValues(top = 6.dp, bottom = 16.dp)) {
                 if (status.isNotEmpty()) item { Small(status, Modifier.padding(horizontal = rowPadH, vertical = 10.dp), maxLines = 2) }
+                st.failures.entries.sortedBy { it.key }.forEach { (name, why) -> item { Small("$name: $why", Modifier.padding(horizontal = rowPadH, vertical = 2.dp), maxLines = 2) } }
                 items(st.hits, key = { it.key }) { h ->
                     Column(Modifier.fillMaxWidth().noRippleClickable { pick(h) }.padding(horizontal = rowPadH, vertical = rowPadV * 0.7f)) {
                         T(h.title, size = typo.title, maxLines = 2)

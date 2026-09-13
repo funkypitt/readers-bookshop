@@ -46,7 +46,8 @@ class Mirrors(context: Context) {
     suspend fun refresh(force: Boolean = false) = withContext(Dispatchers.IO) {
         val now = System.currentTimeMillis()
         if (force || now - state.discovered > 24 * 3600_000L) {
-            val found = runCatching { discover() }.getOrDefault(emptyList())
+            val found = runCatching { discover() }.onFailure { com.freedomfighter.readersbookshop.net.Diag.log("wikipedia: ${it.javaClass.simpleName} ${it.message?.take(60) ?: ""}") }.getOrDefault(emptyList())
+            com.freedomfighter.readersbookshop.net.Diag.log("wikipedia lists: " + found.joinToString(", ").ifBlank { "nothing" })
             if (found.isNotEmpty()) {
                 val known = all.associateBy { it.base }
                 val merged = (found + fallback + userAdded).distinct().map { known[it] ?: Mirror(it) }
@@ -82,5 +83,6 @@ class Mirrors(context: Context) {
             }
         }.map { it.await() }
         save(state.copy(mirrors = results, ranked = now))
+        com.freedomfighter.readersbookshop.net.Diag.log("mirrors: " + results.joinToString(", ") { it.host + " " + (it.ms?.let { ms -> "$ms ms" } ?: "unreachable") })
     }
 }

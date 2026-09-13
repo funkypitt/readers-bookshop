@@ -74,4 +74,6 @@
     <string name="none">none</string>
     <string name="annas_key">membership key (fast downloads, optional)</string>
     <string name="annas_key_hint">the key from your Anna\'s Archive account; cancel removes it</string>
+    <string name="log">log</string>
+    <string name="log_share">tap to share the last lines</string>
 </resources>

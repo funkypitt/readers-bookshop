@@ -72,4 +72,6 @@
     <string name="none">keiner</string>
     <string name="annas_key">Mitgliedsschlüssel (schnelle Downloads, optional)</string>
     <string name="annas_key_hint">der Schlüssel deines Anna\'s-Archive-Kontos; abbrechen entfernt ihn</string>
+    <string name="log">Protokoll</string>
+    <string name="log_share">antippen, um die letzten Zeilen zu teilen</string>
 </resources>

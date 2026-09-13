@@ -7,7 +7,7 @@ import android.webkit.WebSettings
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import android.webkit.RenderProcessGoneDetail
-import android.util.Log
+import com.freedomfighter.readersbookshop.net.Diag
 import com.freedomfighter.readersbookshop.net.Http
 import com.freedomfighter.readersbookshop.net.HttpException
 import kotlinx.coroutines.CompletableDeferred
@@ -39,7 +39,10 @@ class Probe(val url: String, val js: String, val intervalMs: Long, val timeoutMs
  * not enough the page is shown to the user (`pending`). One check at a time, never in parallel.
  */
 class Fetcher(private val app: Context) {
-    val ua: String by lazy { runCatching { WebSettings.getDefaultUserAgent(app) }.getOrDefault(FALLBACK_UA) }
+    /** The WebView's own User-Agent, read on the main thread (WebView refuses other threads); the cookies are bound to it. */
+    @Volatile var ua: String = FALLBACK_UA
+        private set
+    init { android.os.Handler(android.os.Looper.getMainLooper()).post { ua = runCatching { WebSettings.getDefaultUserAgent(app) }.getOrDefault(FALLBACK_UA) } }
     val clearedHosts = HashSet<String>()
     val pending = MutableStateFlow<Probe?>(null)
     private var declinedUntil = 0L
@@ -70,16 +73,17 @@ class Fetcher(private val app: Context) {
 
     /** The page's HTML, past the browser check if there is one. */
     suspend fun fetch(url: String): String = withContext(Dispatchers.IO) {
+        withContext(Dispatchers.Main) { if (ua == FALLBACK_UA) ua = runCatching { WebSettings.getDefaultUserAgent(app) }.getOrDefault(FALLBACK_UA) }
         val first = plain(url)
         if (first != null) return@withContext first
         val host = URL(url).host
         clearedHosts.remove(host)
         if (System.currentTimeMillis() < declinedUntil) throw BlockedException("browser check declined")
-        Log.d(TAG, "browser check on $host")
+        Diag.log("browser check on $host")
         val html = solving.withLock {
             plain(url) ?: probe(url, CHALLENGE_JS, 700, 40_000, allowInteractive = true)
         }
-        Log.d(TAG, "check on $host: " + (if (html == null) "not passed" else "passed, ${html.length} chars"))
+        Diag.log("check on $host: " + (if (html == null) "not passed" else "passed, ${html.length} chars"))
         if (html == null) throw BlockedException("browser check not passed")
         // the plain client now has the cookies; prefer its answer (unwrapped JSON, exact bytes)
         plain(url) ?: html
@@ -87,9 +91,10 @@ class Fetcher(private val app: Context) {
 
     /** null means "a browser check answered" (cookies missing); other failures throw. */
     private fun plain(url: String): String? {
-        val r = Http.get(url, headers(url), 20_000)
+        val r = try { Http.get(url, headers(url), 20_000) } catch (e: Exception) { Diag.log("${URL(url).host}: ${e.javaClass.simpleName} ${e.message?.take(80) ?: ""}"); throw e }
         try {
             val body = r.text()
+            Diag.log("${URL(url).host}: HTTP ${r.code}, ${body.length} chars" + (if (isChallenge(r.code, body)) ", browser check" else ""))
             if (isRateLimit(r.code, body)) throw RateLimitedException()
             if (r.ok && !isChallenge(r.code, body)) { clearedHosts += URL(url).host; return body }
             if (!isChallenge(r.code, body)) throw HttpException(r.code, url)
@@ -102,8 +107,8 @@ class Fetcher(private val app: Context) {
      * string or `timeoutMs` passes; then, if allowed, hand the same probe to the visible screen.
      */
     suspend fun probe(url: String, js: String, intervalMs: Long, timeoutMs: Long, allowInteractive: Boolean): String? {
-        val hidden = runCatching { headless(url, js, intervalMs, timeoutMs) }.onFailure { Log.d(TAG, "hidden webview failed: $it") }.getOrNull()
-        Log.d(TAG, "hidden webview: " + (if (hidden == null) "nothing" else "${hidden.length} chars"))
+        val hidden = runCatching { headless(url, js, intervalMs, timeoutMs) }.onFailure { Diag.log("hidden webview failed: $it") }.getOrNull()
+        Diag.log("hidden webview: " + (if (hidden == null) "nothing" else "${hidden.length} chars"))
         if (hidden != null || !allowInteractive) return hidden
         if (System.currentTimeMillis() < declinedUntil) return null
         val p = Probe(url, js, intervalMs, 15 * 60_000L)
@@ -130,7 +135,7 @@ class Fetcher(private val app: Context) {
                 while (!gone) {
                     delay(intervalMs)
                     val r = withTimeoutOrNull(intervalMs * 4) { wv.eval(js) }
-                    if (r == CAPTCHA) { Log.d(TAG, "captcha shown: needs the user"); return@withTimeoutOrNull null }
+                    if (r == CAPTCHA) { Diag.log("captcha shown: needs the user"); return@withTimeoutOrNull null }
                     if (r != null) return@withTimeoutOrNull r
                 }
                 @Suppress("UNREACHABLE_CODE") null
