@@ -74,4 +74,11 @@
     <string name="annas_key_hint">ключ вашей учётной записи Anna\'s Archive; отмена удаляет его</string>
     <string name="log">журнал</string>
     <string name="log_share">нажмите, чтобы поделиться последними строками</string>
+    <string name="export_credentials">экспортировать учётные данные</string>
+    <string name="import_credentials">импортировать учётные данные</string>
+    <string name="credentials_imported">учётные данные импортированы</string>
+    <string name="credentials_not_file">это не файл учётных данных Reader\'s</string>
+    <string name="credentials_nothing">в этом файле нет ничего для %1$s</string>
+    <string name="credentials_empty">пока нет ключа для экспорта</string>
+    <string name="export_credentials_hint">файл для настройки другого телефона — в нём ключ Anna\'s Archive: храните его в тайне</string>
 </resources>

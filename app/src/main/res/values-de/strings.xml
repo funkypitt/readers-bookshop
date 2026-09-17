@@ -74,4 +74,11 @@
     <string name="annas_key_hint">der Schlüssel deines Anna\'s-Archive-Kontos; abbrechen entfernt ihn</string>
     <string name="log">Protokoll</string>
     <string name="log_share">antippen, um die letzten Zeilen zu teilen</string>
+    <string name="export_credentials">Zugangsdaten exportieren</string>
+    <string name="import_credentials">Zugangsdaten importieren</string>
+    <string name="credentials_imported">Zugangsdaten importiert</string>
+    <string name="credentials_not_file">keine Reader\'s-Zugangsdatendatei</string>
+    <string name="credentials_nothing">diese Datei enthält nichts für %1$s</string>
+    <string name="credentials_empty">noch kein Schlüssel zum Exportieren</string>
+    <string name="export_credentials_hint">eine Datei, um ein anderes Telefon einzurichten — sie enthält den Anna\'s-Archive-Schlüssel: halten Sie sie privat</string>
 </resources>

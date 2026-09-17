@@ -13,5 +13,5 @@ class App : Application() {
     val shelf: Shelf by lazy { Shelf(this) }
     val downloads: Downloads by lazy { Downloads(this, shelf, storage) }
     val registry: Registry by lazy { Registry(this, prefs) }
-    override fun onCreate() { super.onCreate(); shelf.settle() }
+    override fun onCreate() { super.onCreate(); com.freedomfighter.readersbookshop.ui.CredentialsShare.clear(this); shelf.settle() }
 }

@@ -2,4 +2,5 @@
 <paths>
     <external-files-path name="books" path="books/" />
     <files-path name="internal_books" path="books/" />
+    <cache-path name="credentials" path="credentials/" />
 </paths>

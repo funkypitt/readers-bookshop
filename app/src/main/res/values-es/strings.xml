@@ -74,4 +74,11 @@
     <string name="annas_key_hint">la clave de tu cuenta de Anna\'s Archive; cancelar la quita</string>
     <string name="log">registro</string>
     <string name="log_share">toca para compartir las últimas líneas</string>
+    <string name="export_credentials">exportar credenciales</string>
+    <string name="import_credentials">importar credenciales</string>
+    <string name="credentials_imported">credenciales importadas</string>
+    <string name="credentials_not_file">no es un archivo de credenciales Reader\'s</string>
+    <string name="credentials_nothing">este archivo no contiene nada para %1$s</string>
+    <string name="credentials_empty">todavía no hay clave que exportar</string>
+    <string name="export_credentials_hint">un archivo para configurar otro teléfono — contiene la clave de Anna\'s Archive: manténgalo privado</string>
 </resources>

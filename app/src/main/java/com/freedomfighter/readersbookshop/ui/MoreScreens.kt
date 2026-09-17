@@ -126,6 +126,13 @@ fun SettingsScreen(nav: Nav, app: App) {
                 TextRow(settings.textSize.name.lowercase(), secondary = stringResource(R.string.ui_size), size = typo.title) { app.prefs.setTextSize(TextSize.entries[(settings.textSize.ordinal + 1) % TextSize.entries.size]) }
                 TextRow(if (settings.haptics) stringResource(R.string.on) else stringResource(R.string.off), secondary = stringResource(R.string.haptics), size = typo.title) { app.prefs.setHaptics(!settings.haptics) }
                 TextRow(stringResource(R.string.sources), size = typo.title) { nav.push(Screen.Sources) }
+                // the Anna's Archive key as the "readers-bookshop" section of the Reader's credentials file
+                CredentialsRows(
+                    section = "readers-bookshop", shortName = "bookshop", keys = setOf("annas_key"),
+                    hint = stringResource(R.string.export_credentials_hint),
+                    current = { mapOf("annas_key" to app.prefs.settings.value.annasKey) },
+                    onImport = { v -> v["annas_key"]?.let { app.prefs.setAnnasKey(it) } }
+                )
                 TextRow(stringResource(R.string.read_terms), size = typo.title) { nav.push(Screen.Terms) }
                 Rule(Modifier.padding(vertical = 6.dp))
                 TextRow(stringResource(R.string.app_name) + " " + com.freedomfighter.readersbookshop.BuildConfig.VERSION_NAME, secondary = stringResource(R.string.about), size = typo.title) { }
