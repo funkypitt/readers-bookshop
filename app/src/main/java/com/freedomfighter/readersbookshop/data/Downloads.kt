@@ -1,6 +1,7 @@
 package com.freedomfighter.readersbookshop.data
 
 import android.content.Context
+import com.freedomfighter.readersbookshop.R
 import com.freedomfighter.readersbookshop.net.Http
 import com.freedomfighter.readersbookshop.net.HttpException
 import com.freedomfighter.readersbookshop.sources.Download
@@ -54,7 +55,7 @@ class Downloads(private val context: Context, private val shelf: Shelf, private 
             for (d in order) {
                 val r = runCatching { fetch(id, hit, d) }
                 if (r.isSuccess) { setProgress(id, null); return@launch }
-                lastError = describe(r.exceptionOrNull())
+                lastError = describe(context, r.exceptionOrNull())
                 if (r.exceptionOrNull() is BlockedException) break
             }
             setProgress(id, null)
@@ -130,14 +131,20 @@ class Downloads(private val context: Context, private val shelf: Shelf, private 
     }
 
     companion object {
-        fun describe(e: Throwable?): String = when (e) {
-            null -> "failed"
-            is UnknownHostException -> "no connection"
-            is SocketTimeoutException, is TimeoutException -> "timed out"
-            is BlockedException -> "browser check not passed"
-            is RateLimitedException -> "too many requests, try later"
-            is HttpException -> "server answered ${e.code}"
-            else -> e.message?.take(60) ?: "failed"
+        /**
+         * Why it did not work, in the reader's own language. It is read on the search screen
+         * against the source that failed, so it has to say something one can act on — « contrôle
+         * du navigateur non passé » tells one to try again and answer the page, « délai dépassé »
+         * tells one it is simply slow.
+         */
+        fun describe(context: Context, e: Throwable?): String = when (e) {
+            null -> context.getString(R.string.failed)
+            is UnknownHostException -> context.getString(R.string.no_connection)
+            is SocketTimeoutException, is TimeoutException -> context.getString(R.string.timed_out)
+            is BlockedException -> context.getString(R.string.check_not_passed)
+            is RateLimitedException -> context.getString(R.string.too_many_requests)
+            is HttpException -> context.getString(R.string.server_answered, e.code)
+            else -> e.message?.take(60) ?: context.getString(R.string.failed)
         }
     }
 }

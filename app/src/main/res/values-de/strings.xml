@@ -81,4 +81,13 @@
     <string name="credentials_nothing">diese Datei enthält nichts für %1$s</string>
     <string name="credentials_empty">noch kein Schlüssel zum Exportieren</string>
     <string name="export_credentials_hint">eine Datei, um ein anderes Telefon einzurichten — sie enthält den Anna\'s-Archive-Schlüssel: halten Sie sie privat</string>
+    <string name="source_searching">Suche…</string>
+    <string name="source_nothing">nichts</string>
+    <string name="source_hits">%d gefunden</string>
+    <string name="duration_s">%d s</string>
+    <string name="no_connection">keine Verbindung</string>
+    <string name="timed_out">Zeit abgelaufen</string>
+    <string name="check_not_passed">Browser-Prüfung nicht bestanden</string>
+    <string name="too_many_requests">zu viele Anfragen, später erneut</string>
+    <string name="server_answered">Server antwortete %d</string>
 </resources>

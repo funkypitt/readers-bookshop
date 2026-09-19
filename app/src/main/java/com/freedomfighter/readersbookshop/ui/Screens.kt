@@ -62,6 +62,13 @@ sealed class Screen {
 }
 
 /** The search's state lives here so that a trip to the bookshop and back keeps the results. */
+/** What a source is doing: still at it, done with so many, or stopped and why. */
+sealed interface SourceState {
+    data object Running : SourceState
+    data class Done(val hits: Int) : SourceState
+    data class Failed(val why: String) : SourceState
+}
+
 class SearchState {
     var query by mutableStateOf("")
     val hits = mutableStateListOf<Hit>()
@@ -72,6 +79,16 @@ class SearchState {
     val added = mutableStateMapOf<String, Boolean>()
     /** Source name to a short reason, for the sources that did not answer. */
     val failures = mutableStateMapOf<String, String>()
+    /**
+     * Where each source is, while it is there: one line apiece rather than a count.
+     *
+     * The sources do not answer at the same speed — a catalogue answers in a second, Anna's
+     * Archive can take two minutes because of the browser check it sits behind — and a single
+     * "searching…" made the slow one look like nothing at all: one gave up before it answered.
+     */
+    val states = mutableStateMapOf<String, SourceState>()
+    /** When the search began, for the seconds shown against a source still at work. */
+    var startedAt by mutableStateOf(0L)
     var job: Job? = null
     var chosen by mutableStateOf<Hit?>(null)
     var options by mutableStateOf<Pair<List<Download>, Rights>?>(null)
@@ -216,10 +233,13 @@ fun SearchScreen(nav: Nav, app: App) {
 
     fun run() {
         st.job?.cancel()
-        st.hits.clear(); st.answered = 0; st.offline = false; st.failures.clear()
+        st.hits.clear(); st.answered = 0; st.offline = false; st.failures.clear(); st.states.clear()
         val sources = app.registry.forLanguage(lang)
         st.asked = sources.size
         if (sources.isEmpty() || st.query.isBlank()) return
+        // They all start together, so they are all shown as started together.
+        sources.forEach { st.states[it.name] = SourceState.Running }
+        st.startedAt = System.currentTimeMillis()
         st.running = true
         st.job = st.scope.launch {
             try { withContext(Dispatchers.IO) {
@@ -228,12 +248,18 @@ fun SearchScreen(nav: Nav, app: App) {
                         // ten per source, and the sources in their fixed order rather than by who answered first
                         r.onSuccess { hits ->
                             st.answered++
+                            st.states[src.name] = SourceState.Done(hits.size)
                             st.hits.addAll(hits.filter { h -> st.hits.none { it.key == h.key } }.take(10))
                             val order = app.registry.all.map { it.id }
                             val sorted = st.hits.sortedBy { order.indexOf(it.source.id) }
                             st.hits.clear(); st.hits.addAll(sorted)
                         }
-                        r.onFailure { st.failures[src.name] = com.freedomfighter.readersbookshop.data.Downloads.describe(it); if (it is java.net.UnknownHostException) st.offline = true }
+                        r.onFailure {
+                            val why = com.freedomfighter.readersbookshop.data.Downloads.describe(context, it)
+                            st.failures[src.name] = why
+                            st.states[src.name] = SourceState.Failed(why)
+                            if (it is java.net.UnknownHostException) st.offline = true
+                        }
                     }
                 }
             } } finally { st.running = false }
@@ -269,9 +295,31 @@ fun SearchScreen(nav: Nav, app: App) {
                 st.job != null -> stringResource(R.string.sources_answered, st.answered, st.asked)
                 else -> ""
             }
+            // A second hand for the sources still at work, and only while some are.
+            var tick by remember { mutableIntStateOf(0) }
+            LaunchedEffect(st.running) {
+                while (st.running) { kotlinx.coroutines.delay(1000); tick++ }
+            }
             LazyColumn(Modifier.weight(1f), contentPadding = PaddingValues(top = 6.dp, bottom = 16.dp)) {
                 if (status.isNotEmpty()) item { Small(status, Modifier.padding(horizontal = rowPadH, vertical = 10.dp), maxLines = 2) }
-                st.failures.entries.sortedBy { it.key }.forEach { (name, why) -> item { Small("$name: $why", Modifier.padding(horizontal = rowPadH, vertical = 2.dp), maxLines = 2) } }
+                // One line per source, in the order of the sources themselves, so that a slow one
+                // is visibly slow rather than invisible. The failures are said here too.
+                if (st.states.isNotEmpty()) {
+                    val ordered = app.registry.all.filter { st.states.containsKey(it.name) }
+                    items(ordered, key = { it.id }) { src ->
+                        val state = st.states[src.name]
+                        val seconds = ((System.currentTimeMillis() - st.startedAt) / 1000).toInt().coerceAtLeast(0)
+                        @Suppress("UNUSED_EXPRESSION") tick
+                        val said = when (state) {
+                            is SourceState.Done -> if (state.hits == 0) stringResource(R.string.source_nothing)
+                                                   else stringResource(R.string.source_hits, state.hits)
+                            is SourceState.Failed -> state.why
+                            else -> stringResource(R.string.source_searching) +
+                                (if (seconds >= 5) " " + stringResource(R.string.duration_s, seconds) else "")
+                        }
+                        Small("${src.name} · $said", Modifier.padding(horizontal = rowPadH, vertical = 3.dp), maxLines = 2)
+                    }
+                }
                 items(st.hits, key = { it.key }) { h ->
                     Column(Modifier.fillMaxWidth().noRippleClickable { pick(h) }.padding(horizontal = rowPadH, vertical = rowPadV * 0.7f)) {
                         T(h.title, size = typo.title, maxLines = 2)

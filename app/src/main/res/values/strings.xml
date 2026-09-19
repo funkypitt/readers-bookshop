@@ -83,4 +83,13 @@
     <string name="credentials_nothing">this file holds nothing for %1$s</string>
     <string name="credentials_empty">no key to export yet</string>
     <string name="export_credentials_hint">a file to set up another phone — it holds the Anna\'s Archive key: keep it private</string>
+    <string name="source_searching">searching…</string>
+    <string name="source_nothing">nothing</string>
+    <string name="source_hits">%d found</string>
+    <string name="duration_s">%d s</string>
+    <string name="no_connection">no connection</string>
+    <string name="timed_out">timed out</string>
+    <string name="check_not_passed">browser check not passed</string>
+    <string name="too_many_requests">too many requests, try later</string>
+    <string name="server_answered">server answered %d</string>
 </resources>

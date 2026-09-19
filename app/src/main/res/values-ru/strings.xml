@@ -81,4 +81,13 @@
     <string name="credentials_nothing">в этом файле нет ничего для %1$s</string>
     <string name="credentials_empty">пока нет ключа для экспорта</string>
     <string name="export_credentials_hint">файл для настройки другого телефона — в нём ключ Anna\'s Archive: храните его в тайне</string>
+    <string name="source_searching">идёт поиск…</string>
+    <string name="source_nothing">ничего</string>
+    <string name="source_hits">найдено: %d</string>
+    <string name="duration_s">%d s</string>
+    <string name="no_connection">нет соединения</string>
+    <string name="timed_out">время истекло</string>
+    <string name="check_not_passed">проверка браузера не пройдена</string>
+    <string name="too_many_requests">слишком много запросов, позже</string>
+    <string name="server_answered">сервер ответил %d</string>
 </resources>
