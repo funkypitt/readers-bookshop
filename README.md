@@ -60,4 +60,4 @@ MIT licence, see `LICENSE`.
 
 ## Captures d'écran
 
-<img src="docs/screenshot-1.png" width="30%"> <img src="docs/screenshot-2.png" width="30%">
+<img src="docs/screenshot-1.png" width="30%">
