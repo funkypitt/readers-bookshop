@@ -1,5 +1,6 @@
 package com.freedomfighter.readersbookshop.sources
 
+import com.freedomfighter.readersbookshop.R
 import com.freedomfighter.readersbookshop.net.Http
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Element
@@ -18,7 +19,7 @@ object Opds {
             val acq = links.filter { it.attr("rel").contains("opds-spec.org/acquisition") }.mapNotNull { l ->
                 val f = Format.ofMime(l.attr("type")) ?: return@mapNotNull null
                 val length = l.attr("length").toLongOrNull()
-                Download.Url(f, abs(l.attr("href")), listOfNotNull(l.attr("title").ifBlank { null }, length?.let { human(it) }).joinToString(" · ").ifBlank { null })
+                Download.Url(f, abs(l.attr("href")), if (l.attr("title").isBlank() && length == null) null else Txt.join(l.attr("title").ifBlank { null }?.txt(), length?.let { Txt.Size(it) }))
             }
             val authors = e.select("> author > name").joinToString(", ") { it.text() }.ifBlank { e.selectFirst("> content[type=text]")?.text() ?: "" }
             OpdsEntry(
@@ -33,12 +34,6 @@ object Opds {
             )
         }
     }
-
-    fun human(bytes: Long): String = when {
-        bytes >= 1_000_000 -> String.format(java.util.Locale.ROOT, "%.1f MB", bytes / 1_000_000.0)
-        bytes >= 1_000 -> "${bytes / 1_000} kB"
-        else -> "$bytes B"
-    }
 }
 
 /** A plain OPDS catalogue with an OpenSearch endpoint: Ebooks libres et gratuits, textos.info. */
@@ -46,16 +41,16 @@ class OpdsSource(
     override val id: String,
     override val name: String,
     override val languages: Set<Lang>,
-    override val terms: String,
+    override val terms: Txt,
     private val searchUrl: (String) -> String,
-    private val rightsNote: String? = null
+    private val rightsNote: Txt? = null
 ) : Source {
     override suspend fun search(query: String, lang: Lang): List<Hit> {
         if (lang !in languages) return emptyList()
         val url = searchUrl(Http.enc(query))
         val entries = Opds.parse(Http.getText(url, timeoutMs = 15_000), url)
         return entries.filter { it.acquisitions.isNotEmpty() }.map { e ->
-            Hit(this, e.title, e.author, e.acquisitions.map { it.format.ext }.distinct().joinToString(" · "), e.alternate ?: e.subsection, Lang.entries.firstOrNull { it.code == e.lang } ?: lang, Rights(note = rightsNote), e.acquisitions)
+            Hit(this, e.title, e.author, e.acquisitions.map { it.format.ext }.distinct().joinToString(" · ").txt(), e.alternate ?: e.subsection, Lang.entries.firstOrNull { it.code == e.lang } ?: lang, Rights(note = rightsNote), e.acquisitions)
         }
     }
 }
@@ -68,7 +63,7 @@ object Gutenberg : Source {
     override val id = "gutenberg"
     override val name = "Project Gutenberg"
     override val languages = Lang.entries.toSet()
-    override val terms = "OPDS catalogue meant for reading apps; one request per search and per book. Public domain in the USA; the author's dates decide for Switzerland and the EU."
+    override val terms = Txt.res(R.string.terms_gutenberg)
 
     override suspend fun search(query: String, lang: Lang): List<Hit> {
         val url = "https://www.gutenberg.org/ebooks/search.opds/?query=" + Http.enc("$query l.${lang.code}")
@@ -76,7 +71,7 @@ object Gutenberg : Source {
             val feed = e.subsection ?: return@mapNotNull null
             val id = Regex("/ebooks/(\\d+)").find(feed)?.groupValues?.get(1) ?: return@mapNotNull null
             val title = e.title.replace(Regex("\\s*\\([A-Z][a-z]+\\)$"), "")
-            Hit(this, title, e.author, "#$id", "https://www.gutenberg.org/ebooks/$id", lang, resolve = { resolve(feed) })
+            Hit(this, title, e.author, "#$id".txt(), "https://www.gutenberg.org/ebooks/$id", lang, resolve = { resolve(feed) })
         }
     }
 
@@ -85,11 +80,11 @@ object Gutenberg : Source {
         val entries = Opds.parse(xml, feed)
         // The book's feed lists one entry per edition (with and without images); merge, text-only first.
         val all = entries.flatMap { it.acquisitions }
-        val ordered = all.sortedWith(compareBy({ it.format != Format.EPUB }, { !(it.label ?: "").contains("no images") }))
+        val ordered = all.sortedWith(compareBy({ it.format != Format.EPUB }, { !(it.label?.raw ?: "").contains("no images") }))
         val death = Regex("Author:\\s*[^<]*?(\\d{4})\\??-(\\d{4})").find(xml)?.groupValues?.get(2)?.toIntOrNull()
         val rights = Regex("<rights>([^<]*)</rights>").find(xml)?.groupValues?.get(1)
-        val txt = Regex("/ebooks/(\\d+)").find(feed)?.groupValues?.get(1)?.let { Download.Url(Format.TXT, "https://www.gutenberg.org/ebooks/$it.txt.utf-8", "plain text") }
-        return (ordered + listOfNotNull(txt)) to Rights(death, rights)
+        val txt = Regex("/ebooks/(\\d+)").find(feed)?.groupValues?.get(1)?.let { Download.Url(Format.TXT, "https://www.gutenberg.org/ebooks/$it.txt.utf-8", Txt.res(R.string.label_plain_text)) }
+        return (ordered + listOfNotNull(txt)) to Rights(death, rights?.txt())
     }
 }
 
@@ -98,7 +93,7 @@ object Bnr : Source {
     override val id = "bnr"
     override val name = "Bibliothèque numérique romande"
     override val languages = setOf(Lang.FR)
-    override val terms = "Public OPDS catalogue (COPS). Swiss association; every book is in the public domain under the life + 70 years rule."
+    override val terms = Txt.res(R.string.terms_bnr)
     private const val BASE = "https://ebooks-bnr.com/opds/index.php"
 
     override suspend fun search(query: String, lang: Lang): List<Hit> {
@@ -110,7 +105,7 @@ object Bnr : Source {
             author?.subsection?.let { books += feed(it) }
         }
         return books.filter { it.acquisitions.isNotEmpty() }.map { e ->
-            Hit(this, e.title, e.author, e.acquisitions.map { it.format.ext }.distinct().joinToString(" · "), "https://ebooks-bnr.com/?s=" + Http.enc(e.title), Lang.FR, Rights(note = "public domain, life + 70 years (BNR)"), e.acquisitions)
+            Hit(this, e.title, e.author, e.acquisitions.map { it.format.ext }.distinct().joinToString(" · ").txt(), "https://ebooks-bnr.com/?s=" + Http.enc(e.title), Lang.FR, Rights(note = Txt.res(R.string.rights_bnr)), e.acquisitions)
         }
     }
 

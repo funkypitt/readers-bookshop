@@ -2,10 +2,13 @@ package com.freedomfighter.readersbookshop.data
 
 import android.content.Context
 import com.freedomfighter.readersbookshop.R
+import com.freedomfighter.readersbookshop.net.Diag
 import com.freedomfighter.readersbookshop.net.Http
 import com.freedomfighter.readersbookshop.net.HttpException
 import com.freedomfighter.readersbookshop.sources.Download
 import com.freedomfighter.readersbookshop.sources.Hit
+import com.freedomfighter.readersbookshop.sources.SiteMessageException
+import com.freedomfighter.readersbookshop.sources.UserFacingException
 import com.freedomfighter.readersbookshop.sources.annas.BlockedException
 import com.freedomfighter.readersbookshop.sources.annas.RateLimitedException
 import kotlinx.coroutines.CoroutineScope
@@ -59,7 +62,7 @@ class Downloads(private val context: Context, private val shelf: Shelf, private 
                 if (r.exceptionOrNull() is BlockedException) break
             }
             setProgress(id, null)
-            shelf.set(id) { it.copy(status = Status.FAILED, error = lastError ?: "failed") }
+            shelf.set(id) { it.copy(status = Status.FAILED, error = lastError ?: context.getString(R.string.unknown_error)) }
         }
     }
 
@@ -74,7 +77,7 @@ class Downloads(private val context: Context, private val shelf: Shelf, private 
                 var url: Download.Url? = null
                 var err: Throwable? = null
                 repeat(2) { attempt -> if (url == null) runCatching { url = d.resolve() }.onFailure { err = it; if (attempt == 0) delay(1_500) } }
-                stream(id, url ?: throw (err ?: IllegalStateException("no address")), tmp)
+                stream(id, url ?: throw (err ?: UserFacingException(R.string.err_no_link)), tmp)
             }
         }
         val name = listOf(hit.author.take(60), hit.title.take(90)).filter { it.isNotBlank() }.joinToString(" - ") + "." + d.format.ext
@@ -101,7 +104,7 @@ class Downloads(private val context: Context, private val shelf: Shelf, private 
                 try {
                     if (r.code == 416) return@withContext
                     if (!r.ok) throw HttpException(r.code, d.url)
-                    if (r.contentType.startsWith("text/html") && d.format.mime != "text/plain") throw IllegalStateException("page instead of file")
+                    if (r.contentType.startsWith("text/html") && d.format.mime != "text/plain") throw UserFacingException(R.string.err_page_not_file)
                     val append = r.code == 206 && have > 0
                     val total = if (append) have + r.contentLength else r.contentLength
                     if (!append && tmp.exists()) tmp.delete()
@@ -118,7 +121,7 @@ class Downloads(private val context: Context, private val shelf: Shelf, private 
                             }
                         }
                     }
-                    if (total > 0 && done < total) throw IllegalStateException("short read")
+                    if (total > 0 && done < total) throw UserFacingException(R.string.err_incomplete)
                     return@withContext
                 } finally { r.close() }
             } catch (e: Throwable) {
@@ -127,7 +130,7 @@ class Downloads(private val context: Context, private val shelf: Shelf, private 
                 delay(1_500L * attempt)
             }
         }
-        throw last ?: IllegalStateException("failed")
+        throw last ?: UserFacingException(R.string.unknown_error)
     }
 
     companion object {
@@ -138,13 +141,18 @@ class Downloads(private val context: Context, private val shelf: Shelf, private 
          * tells one it is simply slow.
          */
         fun describe(context: Context, e: Throwable?): String = when (e) {
-            null -> context.getString(R.string.failed)
+            null -> context.getString(R.string.unknown_error)
             is UnknownHostException -> context.getString(R.string.no_connection)
             is SocketTimeoutException, is TimeoutException -> context.getString(R.string.timed_out)
             is BlockedException -> context.getString(R.string.check_not_passed)
             is RateLimitedException -> context.getString(R.string.too_many_requests)
             is HttpException -> context.getString(R.string.server_answered, e.code)
-            else -> e.message?.take(60) ?: context.getString(R.string.failed)
+            is UserFacingException -> context.getString(e.res, *e.args)
+            is SiteMessageException -> e.message?.take(60) ?: context.getString(R.string.unknown_error)
+            is kotlinx.serialization.SerializationException -> context.getString(R.string.err_bad_answer)
+            is java.io.IOException -> context.getString(R.string.err_connection)
+            // Java's own messages are in English and mean little to a reader: the log keeps them.
+            else -> { Diag.log("error: ${e.javaClass.simpleName} ${e.message?.take(80) ?: ""}"); context.getString(R.string.unknown_error) }
         }
     }
 }

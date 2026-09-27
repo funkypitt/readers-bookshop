@@ -9,6 +9,8 @@ import android.os.Environment
 import android.provider.DocumentsContract
 import android.provider.MediaStore
 import androidx.core.content.FileProvider
+import com.freedomfighter.readersbookshop.R
+import com.freedomfighter.readersbookshop.sources.UserFacingException
 import java.io.File
 import java.io.OutputStream
 
@@ -34,9 +36,9 @@ class Storage(private val context: Context) {
                 put(MediaStore.Downloads.IS_PENDING, 1)
             }
             val resolver = context.contentResolver
-            val uri = resolver.insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, values) ?: throw IllegalStateException("cannot create file")
+            val uri = resolver.insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, values) ?: throw UserFacingException(R.string.err_cannot_create)
             return Target(uri,
-                open = { resolver.openOutputStream(uri) ?: throw IllegalStateException("cannot write") },
+                open = { resolver.openOutputStream(uri) ?: throw UserFacingException(R.string.err_cannot_write) },
                 finish = { resolver.update(uri, ContentValues().apply { put(MediaStore.Downloads.IS_PENDING, 0) }, null, null) },
                 abort = { runCatching { resolver.delete(uri, null, null) } })
         } else {

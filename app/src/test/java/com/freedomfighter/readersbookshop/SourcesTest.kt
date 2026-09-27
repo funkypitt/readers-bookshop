@@ -9,14 +9,15 @@ import com.freedomfighter.readersbookshop.sources.OpdsSource
 import com.freedomfighter.readersbookshop.sources.Source
 import com.freedomfighter.readersbookshop.sources.StandardEbooks
 import com.freedomfighter.readersbookshop.sources.Wikisource
+import com.freedomfighter.readersbookshop.sources.txt
 import kotlinx.coroutines.runBlocking
 import org.junit.Test
 import java.util.zip.ZipInputStream
 
 /** Live checks against the catalogues: run by hand, they need the network. */
 class SourcesTest {
-    private val elg = OpdsSource("elg", "ELG", setOf(Lang.FR), "", { "https://www.ebooksgratuits.com/opds/feed.php?mode=search&query=$it" })
-    private val textos = OpdsSource("textos", "textos", setOf(Lang.ES), "", { "https://www.textos.info/busqueda.atom?query=$it" })
+    private val elg = OpdsSource("elg", "ELG", setOf(Lang.FR), "".txt(), { "https://www.ebooksgratuits.com/opds/feed.php?mode=search&query=$it" })
+    private val textos = OpdsSource("textos", "textos", setOf(Lang.ES), "".txt(), { "https://www.textos.info/busqueda.atom?query=$it" })
 
     private fun show(s: Source, q: String, lang: Lang) = runBlocking {
         val hits = runCatching { s.search(q, lang) }.getOrElse { println("!! ${s.name} $lang: $it"); return@runBlocking }

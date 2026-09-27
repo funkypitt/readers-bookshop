@@ -1,12 +1,17 @@
 package com.freedomfighter.readersbookshop.sources.annas
 
+import com.freedomfighter.readersbookshop.R
 import com.freedomfighter.readersbookshop.net.Http
 import com.freedomfighter.readersbookshop.sources.Download
 import com.freedomfighter.readersbookshop.sources.Format
 import com.freedomfighter.readersbookshop.sources.Hit
 import com.freedomfighter.readersbookshop.sources.Lang
 import com.freedomfighter.readersbookshop.sources.Rights
+import com.freedomfighter.readersbookshop.sources.SiteMessageException
 import com.freedomfighter.readersbookshop.sources.Source
+import com.freedomfighter.readersbookshop.sources.Txt
+import com.freedomfighter.readersbookshop.sources.UserFacingException
+import com.freedomfighter.readersbookshop.sources.txt
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
@@ -23,7 +28,7 @@ class Annas(private val fetcher: Fetcher, private val mirrors: Mirrors, private 
     override val id = "annas"
     override val name = "Anna's Archive"
     override val languages = Lang.entries.toSet()
-    override val terms = "Shadow library aggregating Library Genesis, Z-Library and others; most of its files are copyrighted. Only its public pages are read, as a browser does. Off unless you turn it on, and then only for files you have the right to download."
+    override val terms = Txt.res(R.string.terms_annas)
     override val defaultEnabled = false
 
     override suspend fun search(query: String, lang: Lang): List<Hit> {
@@ -46,7 +51,7 @@ class Annas(private val fetcher: Fetcher, private val mirrors: Mirrors, private 
                 if (i == 0) runCatching { return parse(fetcher.fetch(url), m.base, lang) }.getOrNull()
             }
         }
-        throw last ?: IllegalStateException("no mirror")
+        throw last ?: UserFacingException(R.string.err_no_mirror)
     }
 
     private fun ownText(e: Element): String = e.textNodes().joinToString(" ") { it.text() }.replace(Regex("\\s+"), " ").trim()
@@ -70,7 +75,7 @@ class Annas(private val fetcher: Fetcher, private val mirrors: Mirrors, private 
             val size = Regex("\\d+(\\.\\d+)?\\s?[KMG]B", RegexOption.IGNORE_CASE).find(info)?.value
             val year = Regex("\\b(1[5-9]\\d{2}|20\\d{2})\\b").find(publisher + " " + info)?.value
             val detail = listOfNotNull(fmt, size, year, publisher.ifBlank { null }).joinToString(" · ")
-            Hit(this, clean(title), clean(author), detail, "$base/md5/$md5", lang, Rights(note = "unknown: check yourself"), resolve = { resolve(md5, Format.ofExt(fmt) ?: Format.EPUB) })
+            Hit(this, clean(title), clean(author), detail.txt(), "$base/md5/$md5", lang, Rights(note = Txt.res(R.string.rights_annas)), resolve = { resolve(md5, Format.ofExt(fmt) ?: Format.EPUB) })
         }
     }
 
@@ -88,18 +93,18 @@ class Annas(private val fetcher: Fetcher, private val mirrors: Mirrors, private 
         val options = ArrayList<Download>()
         // a member's key: the API answers with the file's address at once, no countdown
         val k = key().trim()
-        if (k.isNotEmpty()) options += Download.Deferred(fmt, "fast download (member key)") { fastDownload(base, md5, k, fmt) }
-        fast.forEachIndexed { i, u -> options += Download.Deferred(fmt, "fast download ${i + 1} (members)") { reveal(u, fmt) } }
-        slow.forEachIndexed { i, u -> options += Download.Deferred(fmt, "slow download ${i + 1} (waits for the countdown)") { reveal(u, fmt) } }
-        return options to Rights(note = "unknown: check yourself")
+        if (k.isNotEmpty()) options += Download.Deferred(fmt, Txt.res(R.string.label_fast_key)) { fastDownload(base, md5, k, fmt) }
+        fast.forEachIndexed { i, u -> options += Download.Deferred(fmt, Txt.res(R.string.label_fast_n, i + 1)) { reveal(u, fmt) } }
+        slow.forEachIndexed { i, u -> options += Download.Deferred(fmt, Txt.res(R.string.label_slow_n, i + 1)) { reveal(u, fmt) } }
+        return options to Rights(note = Txt.res(R.string.rights_annas))
     }
 
     private suspend fun fastDownload(base: String, md5: String, k: String, format: Format): Download.Url {
         val body = fetcher.fetch("$base/dyn/api/fast_download.json?md5=$md5&key=" + Http.enc(k))
-        val o = runCatching { Json.parseToJsonElement(body).jsonObject }.getOrNull() ?: throw IllegalStateException("no answer from the key")
+        val o = runCatching { Json.parseToJsonElement(body).jsonObject }.getOrNull() ?: throw UserFacingException(R.string.err_key_no_answer)
         val url = o["download_url"]?.jsonPrimitive?.content?.takeIf { it.startsWith("http") }
-            ?: throw IllegalStateException(o["error"]?.jsonPrimitive?.content ?: "no address from the key")
-        return Download.Url(format, url, "fast download", fetcher.headers(url))
+            ?: throw (o["error"]?.jsonPrimitive?.content?.let(::SiteMessageException) ?: UserFacingException(R.string.err_key_no_link))
+        return Download.Url(format, url, Txt.res(R.string.label_fast), fetcher.headers(url))
     }
 
     /** Open the download page; take the link if it is there, else let the countdown run in a WebView. */

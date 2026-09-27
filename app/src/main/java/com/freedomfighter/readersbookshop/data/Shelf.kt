@@ -28,7 +28,7 @@ data class Book(
 private data class ShelfState(val books: List<Book> = emptyList())
 
 /** The list of downloaded files, newest first, kept in a JSON file. The files themselves are in `Storage`. */
-class Shelf(context: Context) {
+class Shelf(private val context: Context) {
     private val file = File(context.filesDir, "shelf.json")
     private val json = Json { ignoreUnknownKeys = true; prettyPrint = true; encodeDefaults = true }
     private val _books = MutableStateFlow(runCatching { json.decodeFromString<ShelfState>(file.readText()).books }.getOrDefault(emptyList()))
@@ -49,5 +49,5 @@ class Shelf(context: Context) {
     fun clear() = update { emptyList() }
 
     /** A download interrupted by the process dying is marked failed, so it can be retried or removed. */
-    fun settle() = update { l -> l.map { if (it.status == Status.QUEUED || it.status == Status.DOWNLOADING) it.copy(status = Status.FAILED, error = "interrupted") else it } }
+    fun settle() = update { l -> l.map { if (it.status == Status.QUEUED || it.status == Status.DOWNLOADING) it.copy(status = Status.FAILED, error = context.getString(com.freedomfighter.readersbookshop.R.string.interrupted)) else it } }
 }

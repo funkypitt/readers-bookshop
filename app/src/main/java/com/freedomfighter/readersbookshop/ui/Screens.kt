@@ -41,8 +41,8 @@ import com.freedomfighter.readersbookshop.data.Status
 import com.freedomfighter.readersbookshop.sources.Download
 import com.freedomfighter.readersbookshop.sources.Format
 import com.freedomfighter.readersbookshop.sources.Hit
+import com.freedomfighter.readersbookshop.sources.text
 import com.freedomfighter.readersbookshop.sources.Lang
-import com.freedomfighter.readersbookshop.sources.Opds
 import com.freedomfighter.readersbookshop.sources.Rights
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -164,7 +164,7 @@ fun BooksScreen(nav: Nav, app: App) {
                         Status.QUEUED -> stringResource(R.string.queued)
                         Status.DOWNLOADING -> progress[b.id]?.let { if (it < 0) stringResource(R.string.resolving) else stringResource(R.string.downloading, it) } ?: stringResource(R.string.resolving)
                         Status.FAILED -> stringResource(R.string.failed, b.error ?: "")
-                        Status.DONE -> if (missing[b.id] == true) stringResource(R.string.missing) else listOf(if (b.size > 0) Opds.human(b.size) else "", whenLabel(b.added)).filter { it.isNotEmpty() }.joinToString(" · ")
+                        Status.DONE -> if (missing[b.id] == true) stringResource(R.string.missing) else listOf(if (b.size > 0) android.text.format.Formatter.formatShortFileSize(context, b.size) else "", whenLabel(b.added)).filter { it.isNotEmpty() }.joinToString(" · ")
                     }
                     Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                         Column(Modifier.weight(1f).pressable(onClick = { if (b.status == Status.DONE && missing[b.id] != true) openInReader(context, app, b) else bookMenu = b }, onLongPress = { bookMenu = b }).padding(start = rowPadH, top = rowPadV * 0.7f, bottom = rowPadV * 0.7f)) {
@@ -216,7 +216,7 @@ fun BooksScreen(nav: Nav, app: App) {
 private fun rightsLine(r: Rights): String = when {
     r.deathYear != null && r.publicDomainLifePlus70 == true -> stringResource(R.string.rights_pd, r.deathYear)
     r.deathYear != null -> stringResource(R.string.rights_not_pd, r.deathYear)
-    r.note != null -> r.note
+    r.note != null -> r.note.text()
     else -> stringResource(R.string.rights_unknown)
 }
 
@@ -323,7 +323,7 @@ fun SearchScreen(nav: Nav, app: App) {
                 items(st.hits, key = { it.key }) { h ->
                     Column(Modifier.fillMaxWidth().noRippleClickable { pick(h) }.padding(horizontal = rowPadH, vertical = rowPadV * 0.7f)) {
                         T(h.title, size = typo.title, maxLines = 2)
-                        Small(listOf(h.author, h.detail).filter { it.isNotBlank() }.joinToString(" · "), maxLines = 2)
+                        Small(listOf(h.author, h.detail.text()).filter { it.isNotBlank() }.joinToString(" · "), maxLines = 2)
                         Small(h.source.name + (if (st.added[h.key] == true) " · ✓" else ""), maxLines = 1)
                     }
                 }
@@ -339,7 +339,7 @@ fun SearchScreen(nav: Nav, app: App) {
         if (h != null && o != null && !st.resolving) {
             val (downloads, rights) = o
             TextMenu(rightsLine(rights), listOfNotNull(
-                *downloads.map { d -> MenuItem(stringResource(R.string.download_as) + " " + d.format.ext, d.label ?: h.source.name) {
+                *downloads.map { d -> MenuItem(stringResource(R.string.download_as) + " " + d.format.ext, d.label?.text() ?: h.source.name) {
                     app.downloads.enqueue(h, d, downloads); st.added[h.key] = true
                 } }.toTypedArray(),
                 if (downloads.isEmpty()) MenuItem(stringResource(R.string.no_download)) { } else null,

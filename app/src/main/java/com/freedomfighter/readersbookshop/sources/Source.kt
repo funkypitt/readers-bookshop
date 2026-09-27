@@ -23,15 +23,15 @@ enum class Format(val ext: String, val mime: String) {
 }
 
 /** One way to get the file: a URL to fetch, or a builder that produces the bytes itself (Wikisource). */
-sealed class Download(val format: Format, val label: String?) {
-    class Url(format: Format, val url: String, label: String? = null, val headers: Map<String, String> = emptyMap()) : Download(format, label)
+sealed class Download(val format: Format, val label: Txt?) {
+    class Url(format: Format, val url: String, label: Txt? = null, val headers: Map<String, String> = emptyMap()) : Download(format, label)
     /** The address is only known at download time (Anna's Archive reveals it after a countdown). */
-    class Deferred(format: Format, label: String? = null, val resolve: suspend () -> Url) : Download(format, label)
-    class Built(format: Format, label: String? = null, val build: suspend (onProgress: (Int) -> Unit) -> ByteArray) : Download(format, label)
+    class Deferred(format: Format, label: Txt? = null, val resolve: suspend () -> Url) : Download(format, label)
+    class Built(format: Format, label: Txt? = null, val build: suspend (onProgress: (Int) -> Unit) -> ByteArray) : Download(format, label)
 }
 
 /** Rights as far as the source tells: the author's death year lets the app say "public domain in Switzerland/EU" itself. */
-data class Rights(val deathYear: Int? = null, val note: String? = null) {
+data class Rights(val deathYear: Int? = null, val note: Txt? = null) {
     /** Life + 70 years, the rule in Switzerland and the European Union. */
     val publicDomainLifePlus70: Boolean? get() = deathYear?.let { it + 70 < java.time.Year.now().value }
 }
@@ -40,7 +40,7 @@ data class Hit(
     val source: Source,
     val title: String,
     val author: String,
-    val detail: String,                 // what the list shows under the title: year, format, size…
+    val detail: Txt,                    // what the list shows under the title: year, format, size…
     val page: String?,                  // the item's web page, for "open in the browser"
     val lang: Lang?,
     val rights: Rights = Rights(),
@@ -57,7 +57,7 @@ interface Source {
     val name: String
     val languages: Set<Lang>
     /** Where the app's use fits the site's terms: shown in the sources screen. */
-    val terms: String
+    val terms: Txt
     /** Off by default only for Anna's Archive. */
     val defaultEnabled: Boolean get() = true
     suspend fun search(query: String, lang: Lang): List<Hit>

@@ -1,5 +1,6 @@
 package com.freedomfighter.readersbookshop.sources
 
+import com.freedomfighter.readersbookshop.R
 import com.freedomfighter.readersbookshop.net.Http
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
@@ -14,7 +15,7 @@ object StandardEbooks : Source {
     override val id = "standardebooks"
     override val name = "Standard Ebooks"
     override val languages = setOf(Lang.EN)
-    override val terms = "Public search page and download links, as a browser would use them (their OPDS feeds are reserved to patrons). Files dedicated to the public domain (CC0); the underlying texts are public domain in the USA."
+    override val terms = Txt.res(R.string.terms_standardebooks)
 
     override suspend fun search(query: String, lang: Lang): List<Hit> {
         if (lang != Lang.EN) return emptyList()
@@ -25,7 +26,7 @@ object StandardEbooks : Source {
             val author = li.select("p.author span[property=schema:name]").joinToString(", ") { it.text() }
             val slug = path.removePrefix("/ebooks/").split('/').joinToString("_")
             val base = "https://standardebooks.org$path/downloads/$slug"
-            Hit(this, title, author, "epub · azw3", "https://standardebooks.org$path", Lang.EN, Rights(note = "public domain in the USA; files CC0"),
+            Hit(this, title, author, "epub · azw3".txt(), "https://standardebooks.org$path", Lang.EN, Rights(note = Txt.res(R.string.rights_standardebooks)),
                 // "?source=download" skips the thank-you page a browser would see first
                 listOf(Download.Url(Format.EPUB, "$base.epub?source=download"), Download.Url(Format.AZW3, "$base.azw3?source=download")))
         }
@@ -37,7 +38,7 @@ object InternetArchive : Source {
     override val id = "archive"
     override val name = "Internet Archive"
     override val languages = Lang.entries.toSet()
-    override val terms = "Public search and metadata APIs; items under lending restrictions are excluded from the query. Mostly scans with OCR text; rights are as the uploader stated."
+    override val terms = Txt.res(R.string.terms_archive)
     private val json = Json { ignoreUnknownKeys = true }
 
     override suspend fun search(query: String, lang: Lang): List<Hit> {
@@ -51,7 +52,7 @@ object InternetArchive : Source {
             val id = str("identifier")
             val creator = str("creator")
             val death = Regex("(\\d{4})-(\\d{4})").find(creator)?.groupValues?.get(2)?.toIntOrNull()
-            Hit(this, str("title"), creator.replace(Regex(",?\\s*\\d{4}-(\\d{4})?"), ""), listOf(str("year"), "scan").filter { it.isNotBlank() }.joinToString(" · "), "https://archive.org/details/$id", lang, Rights(death),
+            Hit(this, str("title"), creator.replace(Regex(",?\\s*\\d{4}-(\\d{4})?"), ""), Txt.join(str("year").txt(), Txt.res(R.string.detail_scan)), "https://archive.org/details/$id", lang, Rights(death),
                 resolve = { resolve(id, death) })
         }
     }
@@ -64,7 +65,7 @@ object InternetArchive : Source {
             val format = Format.ofExt(name.substringAfterLast('.', "")) ?: return@mapNotNull null
             if (format == Format.TXT && !name.endsWith("_djvu.txt")) return@mapNotNull null
             val size = o["size"]?.jsonPrimitive?.content?.toLongOrNull()
-            Download.Url(format, "https://archive.org/download/$id/" + Http.enc(name).replace("+", "%20"), size?.let(Opds::human))
+            Download.Url(format, "https://archive.org/download/$id/" + Http.enc(name).replace("+", "%20"), size?.let { Txt.Size(it) })
         }.sortedBy { it.format.ordinal }
         return downloads to Rights(death)
     }

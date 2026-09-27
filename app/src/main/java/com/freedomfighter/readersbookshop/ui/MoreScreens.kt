@@ -38,6 +38,7 @@ import com.freedomfighter.readersbookshop.sources.Lang
 import com.freedomfighter.readersbookshop.sources.Registry
 import com.freedomfighter.readersbookshop.sources.annas.Probe
 import com.freedomfighter.readersbookshop.sources.annas.eval
+import com.freedomfighter.readersbookshop.sources.text
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
@@ -68,7 +69,7 @@ fun SourcesScreen(nav: Nav, app: App) {
                             else { app.prefs.setSourceEnabled(s.id, !on); version++ }
                         }.padding(horizontal = rowPadH, vertical = rowPadV * 0.7f)) {
                             T(s.name, size = typo.title, maxLines = 1)
-                            Small((if (on) stringResource(R.string.on) else stringResource(R.string.off)) + " · " + s.languages.sortedBy { it.ordinal }.joinToString(" ") { it.code } + " · " + s.terms, maxLines = 6)
+                            Small((if (on) stringResource(R.string.on) else stringResource(R.string.off)) + " · " + s.languages.sortedBy { it.ordinal }.joinToString(" ") { it.code } + " · " + s.terms.text(), maxLines = 6)
                         }
                     }
                 }
@@ -77,7 +78,7 @@ fun SourcesScreen(nav: Nav, app: App) {
                     Small(stringResource(R.string.mirrors) + " · " + stringResource(R.string.mirrors_hint), Modifier.padding(horizontal = rowPadH, vertical = 8.dp))
                     key(version) {
                         reg.mirrors.ordered.forEach { m ->
-                            TextRow(m.host, secondary = when { m.ms != null -> "${m.ms} ms"; m.checked > 0 -> stringResource(R.string.mirror_unreachable); else -> stringResource(R.string.mirror_untested) }, size = typo.title) { }
+                            TextRow(m.host, secondary = when { m.ms != null -> stringResource(R.string.duration_ms, m.ms); m.checked > 0 -> stringResource(R.string.mirror_unreachable); else -> stringResource(R.string.mirror_untested) }, size = typo.title) { }
                         }
                     }
                     TextRow(if (testing) stringResource(R.string.loading) else stringResource(R.string.test_mirrors), size = typo.title) {
@@ -88,14 +89,14 @@ fun SourcesScreen(nav: Nav, app: App) {
                     // what the last searches did, to understand a silent failure; shared as text
                     val diag = com.freedomfighter.readersbookshop.net.Diag.lines
                     TextRow(stringResource(R.string.log), secondary = if (diag.isEmpty()) stringResource(R.string.none) else stringResource(R.string.log_share), size = typo.title) {
-                        if (diag.isNotEmpty()) runCatching { context.startActivity(Intent.createChooser(Intent(Intent.ACTION_SEND).setType("text/plain").putExtra(Intent.EXTRA_TEXT, com.freedomfighter.readersbookshop.net.Diag.text()), "log")) }
+                        if (diag.isNotEmpty()) runCatching { context.startActivity(Intent.createChooser(Intent(Intent.ACTION_SEND).setType("text/plain").putExtra(Intent.EXTRA_TEXT, com.freedomfighter.readersbookshop.net.Diag.text()), context.getString(R.string.log))) }
                     }
                     diag.takeLast(12).forEach { l -> Small(l, Modifier.padding(horizontal = rowPadH, vertical = 2.dp), maxLines = 2) }
                 }
                 Rule(Modifier.padding(vertical = 6.dp))
                 Small(stringResource(R.string.other_sources) + " · " + (LANG_NAMES[lang] ?: lang.code), Modifier.padding(horizontal = rowPadH, vertical = 8.dp))
                 Registry.links.filter { lang in it.langs }.forEach { l ->
-                    TextRow(l.name, secondary = l.note, size = typo.title) { runCatching { context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(l.url))) } }
+                    TextRow(l.name, secondary = l.note.text(), size = typo.title) { runCatching { context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(l.url))) } }
                 }
                 Box(Modifier.windowInsetsPadding(WindowInsets.navigationBars))
             }
@@ -119,11 +120,11 @@ fun SettingsScreen(nav: Nav, app: App) {
             ScreenTitle(stringResource(R.string.settings), onBack = { nav.pop() })
             Column(Modifier.weight(1f).verticalScroll(rememberScrollState())) {
                 TextRow(LANG_NAMES[lang] ?: lang.code, secondary = stringResource(R.string.language), size = typo.title) { app.prefs.setLang(Lang.entries[(lang.ordinal + 1) % Lang.entries.size].code) }
-                TextRow(when (settings.theme) { ThemeMode.DARK -> stringResource(R.string.theme_dark); ThemeMode.LIGHT -> stringResource(R.string.theme_light); ThemeMode.SYSTEM -> "system" }, secondary = stringResource(R.string.colours), size = typo.title) {
+                TextRow(when (settings.theme) { ThemeMode.DARK -> stringResource(R.string.theme_dark); ThemeMode.LIGHT -> stringResource(R.string.theme_light); ThemeMode.SYSTEM -> stringResource(R.string.theme_system) }, secondary = stringResource(R.string.colours), size = typo.title) {
                     app.prefs.setTheme(ThemeMode.entries[(settings.theme.ordinal + 1) % ThemeMode.entries.size])
                 }
-                TextRow(settings.font.name.lowercase(), secondary = stringResource(R.string.font), size = typo.title) { app.prefs.setFont(FontChoice.entries[(settings.font.ordinal + 1) % FontChoice.entries.size]) }
-                TextRow(settings.textSize.name.lowercase(), secondary = stringResource(R.string.ui_size), size = typo.title) { app.prefs.setTextSize(TextSize.entries[(settings.textSize.ordinal + 1) % TextSize.entries.size]) }
+                TextRow(when (settings.font) { FontChoice.SERIF -> stringResource(R.string.font_serif); FontChoice.SANS -> stringResource(R.string.font_sans); FontChoice.MONO -> stringResource(R.string.font_mono) }, secondary = stringResource(R.string.font), size = typo.title) { app.prefs.setFont(FontChoice.entries[(settings.font.ordinal + 1) % FontChoice.entries.size]) }
+                TextRow(when (settings.textSize) { TextSize.SMALL -> stringResource(R.string.size_small); TextSize.MEDIUM -> stringResource(R.string.size_medium); TextSize.LARGE -> stringResource(R.string.size_large) }, secondary = stringResource(R.string.ui_size), size = typo.title) { app.prefs.setTextSize(TextSize.entries[(settings.textSize.ordinal + 1) % TextSize.entries.size]) }
                 TextRow(if (settings.haptics) stringResource(R.string.on) else stringResource(R.string.off), secondary = stringResource(R.string.haptics), size = typo.title) { app.prefs.setHaptics(!settings.haptics) }
                 TextRow(stringResource(R.string.sources), size = typo.title) { nav.push(Screen.Sources) }
                 // the Anna's Archive key as the "readers-bookshop" section of the Reader's credentials file

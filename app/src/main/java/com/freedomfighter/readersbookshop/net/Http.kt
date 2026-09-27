@@ -47,7 +47,7 @@ object Http {
                 current = next
             } else return Response(code, current, hs, conn)
         }
-        throw IllegalStateException("too many redirects")
+        throw com.freedomfighter.readersbookshop.sources.UserFacingException(com.freedomfighter.readersbookshop.R.string.err_redirects)
     }
 
     fun getText(url: String, headers: Map<String, String> = emptyMap(), timeoutMs: Int = 20_000): String {

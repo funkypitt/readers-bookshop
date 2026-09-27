@@ -1,5 +1,6 @@
 package com.freedomfighter.readersbookshop.sources
 
+import com.freedomfighter.readersbookshop.R
 import com.freedomfighter.readersbookshop.net.Http
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonArray
@@ -23,7 +24,7 @@ object Wikisource : Source {
     override val id = "wikisource"
     override val name = "Wikisource"
     override val languages = Lang.entries.toSet()
-    override val terms = "MediaWiki API with the app's User-Agent, as the Wikimedia policy asks. Texts are checked by the community to be in the public domain (life + 70 years) or freely licensed."
+    override val terms = Txt.res(R.string.terms_wikisource)
     private val json = Json { ignoreUnknownKeys = true }
     private const val MAX_CHAPTERS = 200
 
@@ -37,8 +38,8 @@ object Wikisource : Source {
             val words = o["wordcount"]?.jsonPrimitive?.content?.toIntOrNull() ?: 0
             val page = "$host/wiki/" + Http.enc(title.replace(' ', '_')).replace("+", "_")
             val snippet = Jsoup.parse(o["snippet"]?.jsonPrimitive?.content ?: "").text().replace(Regex("\\s+"), " ").take(70)
-            Hit(this, title, "", (if (words > 0) "$words words on the first page" else "index page") + " · " + snippet, page, lang, Rights(note = "Wikisource: public domain (life + 70) or free licence"),
-                resolve = { listOf(Download.Built(Format.EPUB, "epub built from the pages") { p -> build(lang, title, p) }) to Rights(note = "Wikisource") })
+            Hit(this, title, "", Txt.join(if (words > 0) Txt.Plural(R.plurals.detail_words_first_page, words) else Txt.res(R.string.detail_contents_page), snippet.txt()), page, lang, Rights(note = Txt.res(R.string.rights_wikisource)),
+                resolve = { listOf(Download.Built(Format.EPUB, Txt.res(R.string.label_epub_built)) { p -> build(lang, title, p) }) to Rights(note = "Wikisource".txt()) })
         }
     }
 
@@ -46,7 +47,7 @@ object Wikisource : Source {
 
     private fun parse(lang: Lang, title: String): Pair<String, Document> {
         val url = "https://${lang.code}.wikisource.org/w/api.php?action=parse&prop=text|displaytitle&disableeditsection=1&format=json&formatversion=2&page=" + Http.enc(title)
-        val p = json.parseToJsonElement(Http.getText(url, timeoutMs = 25_000)).jsonObject["parse"]?.jsonObject ?: throw IllegalStateException("no page")
+        val p = json.parseToJsonElement(Http.getText(url, timeoutMs = 25_000)).jsonObject["parse"]?.jsonObject ?: throw UserFacingException(R.string.err_no_page)
         val shown = Jsoup.parse(p["displaytitle"]?.jsonPrimitive?.content ?: title).text()
         return shown to Jsoup.parse(p["text"]?.jsonPrimitive?.content ?: "", "https://${lang.code}.wikisource.org/")
     }
