@@ -75,6 +75,8 @@
     <string name="log">registo</string>
     <string name="log_share">toque para partilhar as últimas linhas</string>
     <string name="export_credentials">exportar credenciais</string>
+    <string name="export_saved">guardado como %1$s</string>
+    <string name="share_export">partilhar este ficheiro…</string>
     <string name="import_credentials">importar credenciais</string>
     <string name="credentials_imported">credenciais importadas</string>
     <string name="credentials_not_file">não é um ficheiro de credenciais Reader\'s</string>

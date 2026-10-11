@@ -75,6 +75,8 @@
     <string name="log">journal</string>
     <string name="log_share">toucher pour partager les dernières lignes</string>
     <string name="export_credentials">exporter les identifiants</string>
+    <string name="export_saved">enregistré sous %1$s</string>
+    <string name="share_export">partager ce fichier…</string>
     <string name="import_credentials">importer les identifiants</string>
     <string name="credentials_imported">identifiants importés</string>
     <string name="credentials_not_file">ce n\'est pas un fichier d\'identifiants Reader\'s</string>

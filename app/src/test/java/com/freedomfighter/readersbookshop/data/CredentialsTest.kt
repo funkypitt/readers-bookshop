@@ -13,6 +13,10 @@ class CredentialsTest {
     private val section = "readers-bookshop"
     private val keys = setOf("annas_key")
 
+    @Test fun theExportIsNamedAfterTheApp() {
+        assertEquals("readers-bookshop-credentials.json", Credentials.fileName("bookshop"))
+    }
+
     @Test fun buildThenReadGivesTheSameKey() {
         val text = Credentials.build(section, mapOf("annas_key" to "k3y-\"12\"\\345"))
         assertTrue(text.contains("\"format\": \"readers-credentials\""))

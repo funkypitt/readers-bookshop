@@ -115,6 +115,7 @@ fun SettingsScreen(nav: Nav, app: App) {
     val settings by app.prefs.settings.collectAsState()
     val typo = LocalTypo.current
     val lang = Lang.of(settings.lang)
+    val export = rememberCredentialsExport("bookshop")
     Page {
         Column(Modifier.fillMaxSize()) {
             ScreenTitle(stringResource(R.string.settings), onBack = { nav.pop() })
@@ -129,7 +130,7 @@ fun SettingsScreen(nav: Nav, app: App) {
                 TextRow(stringResource(R.string.sources), size = typo.title) { nav.push(Screen.Sources) }
                 // the Anna's Archive key as the "readers-bookshop" section of the Reader's credentials file
                 CredentialsRows(
-                    section = "readers-bookshop", shortName = "bookshop", keys = setOf("annas_key"),
+                    section = "readers-bookshop", export = export, keys = setOf("annas_key"),
                     hint = stringResource(R.string.export_credentials_hint),
                     current = { mapOf("annas_key" to app.prefs.settings.value.annasKey) },
                     onImport = { v -> v["annas_key"]?.let { app.prefs.setAnnasKey(it) } }
@@ -141,6 +142,7 @@ fun SettingsScreen(nav: Nav, app: App) {
                 Box(Modifier.windowInsetsPadding(WindowInsets.navigationBars))
             }
         }
+        CredentialsExportMenu(export)
     }
 }
 
